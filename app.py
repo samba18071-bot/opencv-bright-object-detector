@@ -31,23 +31,29 @@ def brighten_image(
     gamma: float,
     color_boost: float,
 ) -> np.ndarray:
-    """Brighten an image using LAB illumination, contrast, gamma, and saturation."""
+    """Brighten an image aggressively via LAB lightness while preserving natural colors."""
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     lightness, a_channel, b_channel = cv2.split(lab)
 
-    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    clahe = cv2.createCLAHE(clipLimit=3.5, tileGridSize=(8, 8))
     lightness = clahe.apply(lightness)
+
+    # Gamma correction applied directly to Lightness to lift shadows without color tint
+    safe_gamma = max(gamma, 0.01)
+    gamma_table = np.array(
+        [((value / 255.0) ** (1.0 / safe_gamma)) * 255 for value in range(256)],
+        dtype=np.uint8,
+    )
+    lightness = cv2.LUT(lightness, gamma_table)
+
+    # Linear contrast & brightness adjustments on Lightness
     lightness = cv2.convertScaleAbs(lightness, alpha=contrast, beta=brightness)
+
     enhanced = cv2.cvtColor(
         cv2.merge((lightness, a_channel, b_channel)), cv2.COLOR_LAB2BGR
     )
 
-    gamma_table = np.array(
-        [((value / 255.0) ** (1.0 / gamma)) * 255 for value in range(256)],
-        dtype=np.uint8,
-    )
-    enhanced = cv2.LUT(enhanced, gamma_table)
-
+    # HSV saturation control (keeps colors natural without adding color casts)
     hsv = cv2.cvtColor(enhanced, cv2.COLOR_BGR2HSV).astype(np.float32)
     hsv[:, :, 1] = np.clip(hsv[:, :, 1] * color_boost, 0, 255)
     return cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
@@ -85,10 +91,10 @@ st.caption("Aggressively enhance dark images with OpenCV, then detect objects wi
 
 with st.sidebar:
     st.header("Enhancement controls")
-    brightness = st.slider("Brightness", 0, 150, 65)
-    contrast = st.slider("Contrast", 0.8, 2.5, 1.25, 0.05)
-    gamma = st.slider("Gamma lift", 0.4, 2.5, 1.8, 0.1)
-    color_boost = st.slider("Color boost", 0.8, 2.0, 1.15, 0.05)
+    brightness = st.slider("Brightness", 0, 200, 80)
+    contrast = st.slider("Contrast", 0.5, 2.5, 1.20, 0.05)
+    gamma = st.slider("Gamma lift", 0.5, 3.5, 2.0, 0.1)
+    color_boost = st.slider("Color boost", 0.0, 2.0, 1.00, 0.05)
 
     st.header("Detection controls")
     model_name = st.selectbox("YOLO model", ("yolo11n.pt", "yolo11s.pt"))

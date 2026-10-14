@@ -80,7 +80,9 @@ it downloads the YOLO weights and initializes the model.
 
 ## How enhancement works
 
-The pipeline combines LAB lightness enhancement with CLAHE, brightness and
-contrast adjustment, gamma correction, and HSV saturation control. This gives
-strong visibility improvements while retaining more detail than simply adding
-to every RGB channel.
+The pipeline prioritizes aggressive illumination recovery without distorting natural colors:
+1. **LAB Color Space Conversion**: Decouples illumination (`L` channel) from chromatic color opponent channels (`a` and `b`).
+2. **CLAHE Adaptive Histogram Equalization**: Local contrast enhancement applied to `lightness` with an elevated clip limit to bring out deep shadow detail.
+3. **Gamma Correction on Lightness**: A non-linear gamma lookup table applied directly to the `lightness` channel, aggressively lifting dark regions without shifting RGB ratios or creating color tint.
+4. **Brightness & Contrast Scaling**: Linear adjustments (`cv2.convertScaleAbs`) on the illumination channel to achieve target luminance.
+5. **HSV Color Control**: Converts the illumination-enhanced image into HSV space, defaulting saturation multiplier to neutral `1.0` to preserve authentic object color without adding artificial color casts.
