@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+.venv/
+*.py[cod]
+.DS_Store
+*.pt
+*.jpg
+*.jpeg
+*.png
+*.webp
