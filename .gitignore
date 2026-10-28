@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Model weights & training outputs
+*.pt
+runs/
+
+# Output directories & temp files
+outputs/
+temp/
+*.tmp
+*.mp4
+*.avi
+*.mov
+
+# Operating System files
+.DS_Store
+Thumbs.db
